@@ -11,6 +11,9 @@ import fs from 'fs'
 function main(){
 
   if(fs.existsSync('token.json')){
+
+    
+
     return
   }
   
