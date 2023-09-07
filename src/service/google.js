@@ -56,8 +56,54 @@ export class GoogleService {
 
   }
 
-  refreshAUthToken() {
+  refreshAuthToken(save) {
 
+    const tokenRefreshURI = new URL(url.format({
+      protocol: this.#authTokenURL.protocol,
+      host: this.#authTokenURL.hostname,
+      pathname: this.#authTokenURL.pathname,
+      query: {
+        client_id: this.credentialsFile.client_id,
+        client_secret: this.credentialsFile.client_secret,
+        refresh_token: this.token.refresh_token,
+        grant_type: 'refresh_token'
+      }
+    }))
+
+    const options = {
+      method: 'POST',
+      hostname: `${tokenRefreshURI.host}`,
+      path: `${tokenRefreshURI.pathname}${tokenRefreshURI.search}`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    }
+
+    return new Promise((resolve, reject) => {      
+
+      const req = https.request(options, (res) => {
+
+        let data = ""
+
+        res.on('data', chunk => {
+          data += chunk
+        })
+
+        res.on('end', () => {
+          data = JSON.parse(data)          
+
+          resolve(data)
+
+          if (save) {
+            fs.writeFileSync('token.json', JSON.stringify(data), 'utf-8')
+          }
+        })
+
+        res.on('err', (err) => reject(err))
+      })
+
+      req.end()
+    })
   }
 
   requestAuthToken(authCode, save) {
@@ -97,7 +143,7 @@ export class GoogleService {
           resolve(data)
 
           if (save) {
-            fs.writeFileSync('./token.json', JSON.stringify(data), 'utf-8')
+            fs.writeFileSync('./auth/token.json', JSON.stringify(data), 'utf-8')
           }
 
         })
@@ -140,76 +186,6 @@ export class GoogleService {
     })
 
   }
-}
-
-export class GooglePhotosService {
-
-  constructor() { }
-
-  requestGoogleImage(media, options){
-
-    return new Promise((resolve, reject) => {
-      
-      let image = []
-  
-      const reqImage = https.get(`${media.baseUrl}=d`, options, (res) => {
-        res.on('data', chunk => {
-          image = [...image, chunk]
-        })
-  
-        res.on('error', err => {
-          reject(err)
-        })
-  
-        res.on('end', () => {
-          resolve(true)
-          fs.writeFileSync(`${media.filename}`, Buffer.concat([...image]))
-        })
-      })
-  
-      reqImage.end()
-    })
-
-  }
-
-  downloadImages(token) {
-
-    const options = {
-      headers: {
-        'Content-type': 'application/json',
-        'Authorization': `Bearer ${token.access_token}`
-      }
-    }
-
-    const req = https.get('https://photoslibrary.googleapis.com/v1/mediaItems', options, (res) => {
-
-      let data = ""
-
-      res.on('data', chunk => {
-        data += chunk
-      })
-
-      res.on('end', () => {
-
-        const { mediaItems } = JSON.parse(data)
-
-        this.requestGoogleImage(mediaItems[0], options)
-        .then(
-          res => {
-            if (res)
-              console.log('Image Saved')
-          }
-        ).catch(err => console.log(err))        
-      })
-
-      res.on('error', err => {
-        console.log(err)
-      })
-    })
-
-    req.end()
-  }
-
 }
 
 export default {}

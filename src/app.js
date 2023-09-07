@@ -1,10 +1,10 @@
 import 'dotenv/config'
-import { pinoConfig } from './config/pino.config.js'
-import { GooglePhotosService, GoogleService } from './config/creds.config.js'
+import { GoogleService } from './service/google.js'
+import { GooglePhotosService } from './service/google_photos.js'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
-function main(){
+async function main(){
   
   const googleService = new GoogleService()
   const googlePhotos = new GooglePhotosService()
@@ -12,10 +12,20 @@ function main(){
   googleService.loadCredentials(join(
     dirname(fileURLToPath(import.meta.url)), './auth/credentials.json'))
 
-  googleService.requestCredentials(['https://www.googleapis.com/auth/photoslibrary'])
-  .then(
-    token => googlePhotos.downloadImages(token)
-  )
+  try {
+
+    let token = await googleService.requestCredentials(['https://www.googleapis.com/auth/photoslibrary'])
+    let resImage = await googlePhotos.downloadImages(token)    
+
+    if(!resImage){
+      token = await googleService.refreshAuthToken(false)
+      resImage = await googlePhotos.downloadImages(token)
+    }
+    
+  } catch (error) {
+    console.log(error)
+  }  
+
 
 }
 
