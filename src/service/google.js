@@ -95,7 +95,7 @@ export class GoogleService {
           resolve(data)
 
           if (save) {
-            fs.writeFileSync('token.json', JSON.stringify(data), 'utf-8')
+            fs.writeFileSync('./auth/token.json', JSON.stringify(data), 'utf-8')
           }
         })
 
@@ -143,7 +143,7 @@ export class GoogleService {
           resolve(data)
 
           if (save) {
-            fs.writeFileSync('./auth/token.json', JSON.stringify(data), 'utf-8')
+            fs.writeFileSync('./auth/tokenRefresh.json', JSON.stringify(data), 'utf-8')
           }
 
         })

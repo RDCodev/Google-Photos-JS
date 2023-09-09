@@ -32,6 +32,10 @@ export class GooglePhotosService {
 
   }
 
+  downloadNextPageImages(){
+    
+  }
+
   downloadImages(tokenAuth) {
 
     const token = tokenAuth
@@ -62,19 +66,31 @@ export class GooglePhotosService {
           }
 
           if(data.hasOwnProperty('mediaItems')){
-            const { mediaItems } = data
 
-            mediaItems.forEach((media, i) => {
-              this.requestGoogleImage(media, options)
-                .then(
-                  res => {
-                    if (res)
-                      console.log(`Image ${i} saved.`)
-                      resolve(true)
-                  }
-                ).catch(err => reject(err))
-            })
-    
+            while(true){
+              const { mediaItems } = data
+
+              if(!mediaItems.hasOwnProperty('nextPageToken')){
+                break
+              }
+
+              mediaItems.forEach((media, i) => {
+                this.requestGoogleImage(media, options)
+                  .then(
+                    res => {
+                      if (res)
+                        console.log(`Image ${i} saved.`)
+                        resolve(true)
+                    }
+                  ).catch(err => reject(err))
+              })
+
+              const req = https.get(`https://photoslibrary.googleapis.com/v1/mediaItems?pageToken=${mediaItems.nextPageToken}`, options, (res) => {
+                res.on('data', chunk => {})
+              })
+
+              req.end()
+            }                
           }
   
         })
