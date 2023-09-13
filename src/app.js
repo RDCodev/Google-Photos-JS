@@ -15,7 +15,7 @@ async function main(){
   try {
 
     let token = await googleService.requestCredentials(['https://www.googleapis.com/auth/photoslibrary'])
-    let resImage = await googlePhotos.downloadImages(token)    
+    let resImage = await googlePhotos.downloadImages(token) 
 
     if(!resImage){
       token = await googleService.refreshAuthToken(false)
