@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import { GoogleService } from './service/google.js'
 import { GooglePhotosService } from './service/google_photos.js'
 import { dirname, join } from 'path'

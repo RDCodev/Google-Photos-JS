@@ -22,7 +22,7 @@ export class GooglePhotosService {
           reject(err)
         })
 
-        res.on('end', () => {          
+        res.on('end', () => {
           resolve(true)
           fs.writeFileSync(`./downloads/${media.filename}`, Buffer.concat([...image]))
         })
@@ -46,9 +46,9 @@ export class GooglePhotosService {
 
           res.on('end', () => {
 
-            if(temp){
-              resolve(JSON.parse(temp))              
-            }        
+            if (temp) {
+              resolve(JSON.parse(temp))
+            }
           })
 
           res.on('error', (err) => reject(err))
@@ -89,41 +89,41 @@ export class GooglePhotosService {
           }
 
           if (data.hasOwnProperty('mediaItems')) {
-           
-            let { mediaItems, nextPageToken } = data    
-            
-            while(nextPageToken){  
-              
-                console.log(nextPageToken)
 
-                mediaItems.forEach(async (media, i) => {
-  
-                  if (media.mimeType == 'image/jpeg') {
-  
-                    try {
-                      const res = await this.requestGoogleImage(media, options)
-  
-                      if(res){
-                        console.log(`Image ${i} saved.`)
-                        resolve(true)
-                      }
-                      
-                    } catch (error) {
-                      reject(error)
+            let { mediaItems, nextPageToken } = data
+
+            while (nextPageToken) {
+
+              console.log(nextPageToken)
+
+              mediaItems.forEach(async (media, i) => {
+
+                if (media.mimeType == 'image/jpeg') {
+
+                  try {
+                    const res = await this.requestGoogleImage(media, options)
+
+                    if (res) {
+                      console.log(`Image ${i} saved.`)
+                      resolve(true)
                     }
-  
+
+                  } catch (error) {
+                    reject(error)
                   }
-  
-                })
-  
-                const res = await this.downloadNextPageImages(nextPageToken, options)
-                
-                mediaItems = res.mediaItems
-                nextPageToken = res.nextPageToken
-                
-              }
-              
-          
+
+                }
+
+              })
+
+              const res = await this.downloadNextPageImages(nextPageToken, options)
+
+              mediaItems = res.mediaItems
+              nextPageToken = res.nextPageToken
+
+            }
+
+
           }
 
         })

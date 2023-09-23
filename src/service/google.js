@@ -79,7 +79,7 @@ export class GoogleService {
       }
     }
 
-    return new Promise((resolve, reject) => {      
+    return new Promise((resolve, reject) => {
 
       const req = https.request(options, (res) => {
 
@@ -90,7 +90,7 @@ export class GoogleService {
         })
 
         res.on('end', () => {
-          data = JSON.parse(data)          
+          data = JSON.parse(data)
 
           resolve(data)
 
