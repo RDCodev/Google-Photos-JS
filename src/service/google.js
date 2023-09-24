@@ -5,6 +5,10 @@ import http from 'http'
 import open from 'open'
 import https from 'https'
 
+const GOOGLE_AUTH_TYPES = {
+  installed: "installed",
+}
+
 export class GoogleService {
 
   credentialsFile = null
@@ -187,5 +191,3 @@ export class GoogleService {
 
   }
 }
-
-export default {}

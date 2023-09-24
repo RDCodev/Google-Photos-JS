@@ -1,7 +1,4 @@
-import { GoogleService } from './temp/google.js'
-import { GooglePhotosService } from './service/google_photos.js'
-import { dirname, join } from 'path'
-import { fileURLToPath } from 'url'
+
 
 async function main() {
 
@@ -24,8 +21,6 @@ async function main() {
   } catch (error) {
     console.log(error)
   }
-
-
 }
 
 main()
