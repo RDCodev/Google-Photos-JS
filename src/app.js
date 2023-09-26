@@ -1,26 +1,15 @@
+import yargs from 'yargs'
+import { hideBin } from 'yargs/helpers'
+import { backupGooglePhotos } from './cli/functions.cli.js'
 
-
-async function main() {
-
-  const googleService = new GoogleService()
-  const googlePhotos = new GooglePhotosService()
-
-  googleService.loadCredentials(join(
-    dirname(fileURLToPath(import.meta.url)), './auth/credentials.json'))
-
-  try {
-
-    let token = await googleService.requestCredentials(['https://www.googleapis.com/auth/photoslibrary'])
-    let resImage = await googlePhotos.downloadImages(token)
-
-    if (!resImage) {
-      token = await googleService.refreshAuthToken(false)
-      resImage = await googlePhotos.downloadImages(token)
+yargs(hideBin(process.argv))
+  .command(
+    "backup",
+    "Backup the data in Google Accounts",
+    () => { },
+    (argv) => {
+      backupGooglePhotos(argv)
     }
-
-  } catch (error) {
-    console.log(error)
-  }
-}
-
-main()
+  )
+  .example('node $0 backup --service=Photos --path="~/home')
+  .parse()
