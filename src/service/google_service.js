@@ -15,6 +15,6 @@ export default class GoogleServicePhoto extends GoogleService {
   }
 
   backupGooglePhotos(){
-    this.googleAuth.requestAuthClient({pathFile: this.path})
+    this.googleAuth.requestAuthClient({pathFile: this.path, isSave: true})
   }
 }

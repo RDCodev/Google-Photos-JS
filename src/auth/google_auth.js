@@ -15,18 +15,18 @@ export class GoogleAuth {
 
   loadGoogleCredentials({ path }) {
     try {
-      this.credentialsFile = this.googleUtils.googleReadFile({path})
+      this.credentialsFile = this.googleUtils.googleReadFile({ path })
     } catch (error) {
       throw error
     }
   }
 
-  authFlowParams(){
+  authFlowParams() {
 
     let oauthParams = null
 
-    if(this.credentialsFile.installed){
-      const { installed } = this.credentialsFile          
+    if (this.credentialsFile.installed) {
+      const { installed } = this.credentialsFile
       const googleQuery = GOOGLE_QUERY_OAUTH
 
       googleQuery.scope = [GOOGLE_PHOTOS_SCOPES.full_access]
@@ -37,25 +37,25 @@ export class GoogleAuth {
         credentialOptions: new URL(installed.auth_uri),
         queryOptions: googleQuery,
         isOptions: false
-      })      
+      })
     }
 
     return oauthParams
   }
 
-  authorizationToken({authCode, tokenRefresh, isExpired}){
+  authorizationToken({ authCode, tokenRefresh, isExpired }) {
     let queryToken = null
     const { installed } = this.credentialsFile
 
-    if(tokenRefresh && isExpired) return null
+    if (tokenRefresh && isExpired) return null
 
-    if(authCode){
+    if (authCode) {
       queryToken = GOOGLE_QUERY_TOKEN
 
       queryToken.code = authCode
       queryToken.client_id = installed.client_id,
-      queryToken.client_secret = installed.client_secret,
-      queryToken.redirect_uri = [...installed.redirect_uris]
+        queryToken.client_secret = installed.client_secret,
+        queryToken.redirect_uri = [...installed.redirect_uris]
     }
 
     return this.googleUtils.googleUrlOptions({
@@ -74,16 +74,28 @@ export class GoogleAuthFlow extends GoogleAuth {
 
   async requestAuthClient({ pathFile, isSave }) {
     try {
+
+      if(this.googleUtils.googleCheckFile({ path: '/src/data/auth_credentials.json' })){
+        this.googleAuth = this.googleUtils.googleCheckFile({ path: '/src/data/auth_credentials.json' })
+        return this.googleAuth
+      }    
+
       this.loadGoogleCredentials({ path: pathFile })
-      this.googleAuth.auth2Code = await this.googleUtils.googleServerRequest({urlOptions: this.authFlowParams()})
+      this.googleAuth.auth2Code = await this.googleUtils.googleServerRequest({ urlOptions: this.authFlowParams() })
       this.googleAuth.token = await this.googleUtils.googleClientRequest({
         urlOptions: this.authorizationToken({
           authCode: this.googleAuth.auth2Code
-        })})
+        })
+      })
 
-      if (isSave) this.googleUtils.googleSaveFile()
+      if (isSave) this.googleUtils.googleSaveFile({
+        path: 'src/data/',
+        filename: 'auth_credentials.json',
+        data: this.googleAuth
+      })
 
       return this.googleAuth
+
     } catch (error) {
       throw error
     }

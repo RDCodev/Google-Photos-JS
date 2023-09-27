@@ -11,7 +11,7 @@ export class GoogleUtils {
   client = null
 
   constructor() {
-    this.server = http.createServer((_, res) => res.end())
+    this.server = http.createServer((_, res) => res.end() )
     this.server.listen(8080)
   }
 
@@ -46,9 +46,9 @@ export class GoogleUtils {
     })
   }
 
-  googleSaveFile({ path, data, fileName }) {
+  googleSaveFile({ path, filename, data }) {
     try {
-      fs.writeFileSync(`${path}/${fileName}`, data, 'utf-8')
+      fs.writeFileSync(`${process.cwd()}${path}/${filename}`, JSON.stringify(data), 'utf-8')
     } catch (error) {
       throw error
     }
@@ -82,5 +82,13 @@ export class GoogleUtils {
     }
 
     return !isOptions ? uri.toString() : options
+  }
+
+  googleCheckFile({path}){
+    if(fs.existsSync(`${process.cwd()}${path}`)){
+      return this.googleReadFile({ path: `${process.cwd()}${path}`})
+    }
+    
+    return false
   }
 }
