@@ -40,7 +40,7 @@ export class GoogleUtils {
     return new Promise((resolve, reject) => {
       https.request(urlOptions, (res) => {
         res.on('data', chunk => buffer += chunk)
-        res.on('end', () => resolve(JSON.parse(buffer)))
+        res.on('end', () => resolve(buffer))
         res.on('error', err => reject(err))
       }).end()      
     })
@@ -66,7 +66,7 @@ export class GoogleUtils {
     return resolve(path)
   }
 
-  googleUrlOptions({ credentialOptions, queryOptions, headerOptions, isOptions }) {
+  googleUrlOptions({ credentialOptions, queryOptions, headerOptions, isOptions, method = 'POST' }) {
     const uri = new URL(url.format({
       protocol: credentialOptions.protocol,
       host: credentialOptions.hostname,
@@ -75,7 +75,7 @@ export class GoogleUtils {
     }))
 
     const options = {
-      method: 'POST',
+      method,
       hostname: uri.host,
       path: uri.pathname + uri.search,
       headers: headerOptions

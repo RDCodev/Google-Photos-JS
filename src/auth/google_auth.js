@@ -1,4 +1,4 @@
-import { GOOGLE_PHOTOS_SCOPES, GOOGLE_QUERY_OAUTH, GOOGLE_QUERY_TOKEN } from "../models/google_types.models.js"
+import { GOOGLE_PHOTOS_SCOPES, GOOGLE_QUERY_OAUTH, GOOGLE_QUERY_REFRESH_TOKEN, GOOGLE_QUERY_TOKEN } from "../models/google_types.models.js"
 import { GoogleUtils } from "../utils/google.utils.js"
 
 export class GoogleAuth {
@@ -47,15 +47,21 @@ export class GoogleAuth {
     let queryToken = null
     const { installed } = this.credentialsFile
 
-    if (tokenRefresh && isExpired) return null
+    if (tokenRefresh && isExpired) {
+      queryToken = GOOGLE_QUERY_REFRESH_TOKEN
+      
+      queryToken.client_id = installed.client_id
+      queryToken.client_secret = installed.client_secret
+      queryToken.refresh_token = tokenRefresh
+    }
 
     if (authCode) {
       queryToken = GOOGLE_QUERY_TOKEN
 
       queryToken.code = authCode
       queryToken.client_id = installed.client_id,
-        queryToken.client_secret = installed.client_secret,
-        queryToken.redirect_uri = [...installed.redirect_uris]
+      queryToken.client_secret = installed.client_secret,
+      queryToken.redirect_uri = [...installed.redirect_uris]
     }
 
     return this.googleUtils.googleUrlOptions({
@@ -64,6 +70,8 @@ export class GoogleAuth {
       isOptions: true
     })
   }
+
+
 }
 
 export class GoogleAuthFlow extends GoogleAuth {
@@ -75,18 +83,21 @@ export class GoogleAuthFlow extends GoogleAuth {
   async requestAuthClient({ pathFile, isSave }) {
     try {
 
-      if(this.googleUtils.googleCheckFile({ path: '/src/data/auth_credentials.json' })){
+      if (this.googleUtils.googleCheckFile({ path: '/src/data/auth_credentials.json' })) {
+        this.loadGoogleCredentials({ path: pathFile })
         this.googleAuth = this.googleUtils.googleCheckFile({ path: '/src/data/auth_credentials.json' })
         return this.googleAuth
-      }    
+      }
 
       this.loadGoogleCredentials({ path: pathFile })
       this.googleAuth.auth2Code = await this.googleUtils.googleServerRequest({ urlOptions: this.authFlowParams() })
-      this.googleAuth.token = await this.googleUtils.googleClientRequest({
-        urlOptions: this.authorizationToken({
-          authCode: this.googleAuth.auth2Code
+      this.googleAuth.token = await JSON.parse(
+        this.googleUtils.googleClientRequest({
+          urlOptions: this.authorizationToken({
+            authCode: this.googleAuth.auth2Code
+          })
         })
-      })
+      )
 
       if (isSave) this.googleUtils.googleSaveFile({
         path: 'src/data/',
@@ -103,5 +114,9 @@ export class GoogleAuthFlow extends GoogleAuth {
 
   refreshAuthClient() {
 
+  }
+
+  getGoogleUtils() {
+    return this.googleUtils
   }
 }
