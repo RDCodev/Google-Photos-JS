@@ -16,31 +16,39 @@ export default class GoogleServicePhoto extends GoogleService {
     this.googleUtils = this.googleAuth.getGoogleUtils()
   }
 
-  async backupGooglePhotos() {
-    this.credentials = await this.googleAuth.requestAuthClient({ pathFile: this.path, isSave: true })
-    const { mediaItems, nextPageToken } = await this.requestGooglePhotosMedia()
+  async backupGooglePhotos(nextPage) {
 
-    Promise.all(mediaItems.map((item) => {
+    this.credentials = await this.googleAuth.requestAuthClient({ pathFile: this.path, isSave: true })
+    const { mediaItems, nextPageToken } = await this.requestGooglePhotosMedia(nextPage)
+
+    await Promise.all(mediaItems.map( async (item) => {
       if (item.mimeType == 'image/jpeg') {
-        this.requestGooglePhoto({
+        return await this.requestGooglePhoto({
           media: item,
           access_token: this.credentials.token.access_token,
           dir: "/downloads"
         })
       }
+
+      return true
     }))
+
+    if(nextPageToken){
+      this.backupGooglePhotos(nextPageToken)
+    }
   }
 
-  async requestGooglePhotosMedia() {
+  async requestGooglePhotosMedia(next) {
 
     try {
       const { token: { access_token, refresh_token } } = this.credentials
 
       let media = await this.googleUtils.googleClientRequest({
-        urlOptions: this.googleMediaRequest({ access_token })
+        urlOptions: this.googleMediaRequest({ access_token, nextPageToken: next }) 
       })
 
       if (JSON.parse(media).hasOwnProperty('error')) {
+
         const refresedToken = await this.googleUtils.googleClientRequest({
           urlOptions: this.googleAuth.authorizationToken({
             tokenRefresh: refresh_token,
@@ -49,7 +57,7 @@ export default class GoogleServicePhoto extends GoogleService {
         })
 
         media = await this.googleUtils.googleClientRequest({
-          urlOptions: this.googleMediaRequest({ access_token: JSON.parse(refresedToken).access_token })
+          urlOptions: this.googleMediaRequest({ access_token: JSON.parse(refresedToken).access_token, nextPageToken: next })
         })
       }
 
@@ -63,15 +71,15 @@ export default class GoogleServicePhoto extends GoogleService {
   requestGooglePhoto({ media, access_token, dir }) {
 
     return new Promise(async (resolve, reject) => {
-      const bufferImage = await this.googleUtils.googleClientRequestBuffer({
-        urlOptions: new URL(`${media.baseUrl}=d`),
-        headerOptions: this.googlePhotosHeaders({ token: access_token }),
-      })
-
       try {
+        const bufferImage = await this.googleUtils.googleClientRequestBuffer({
+          urlOptions: new URL(`${media.baseUrl}=d`),
+          headerOptions: this.googlePhotosHeaders({ token: access_token }),
+        })
 
         console.log(`Download img: ${media.filename}`)
-        this.googleUtils.googleSaveFileBuffer({
+
+        await this.googleUtils.googleSaveFileBuffer({
           path: dir,
           filename: media.filename,
           data: Buffer.concat([...bufferImage])
@@ -84,17 +92,25 @@ export default class GoogleServicePhoto extends GoogleService {
     })
   }
 
-  saveGooglePhoto({ buffer }) {
+  googleMediaRequest({ access_token, nextPageToken }) {    
+    
+    if(nextPageToken != null){
+      return this.googleUtils.googleUrlOptions({
+        credentialOptions: new URL(`https://photoslibrary.googleapis.com/v1/mediaItems`),
+        queryOptions: {pageToken:nextPageToken},
+        headerOptions: this.googlePhotosHeaders({ token: access_token }),
+        isOptions: true,
+        method: 'GET'
+      })
+    }else{
+      return this.googleUtils.googleUrlOptions({
+        credentialOptions: new URL('https://photoslibrary.googleapis.com/v1/mediaItems'),
+        headerOptions: this.googlePhotosHeaders({ token: access_token }),
+        isOptions: true,
+        method: 'GET'
+      })
+    }
 
-  }
-
-  googleMediaRequest({ access_token }) {
-    return this.googleUtils.googleUrlOptions({
-      credentialOptions: new URL('https://photoslibrary.googleapis.com/v1/mediaItems'),
-      headerOptions: this.googlePhotosHeaders({ token: access_token }),
-      isOptions: true,
-      method: 'GET'
-    })
   }
 
   googlePhotosHeaders({ token }) {

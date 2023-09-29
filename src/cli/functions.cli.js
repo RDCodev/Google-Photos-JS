@@ -6,5 +6,5 @@ export function backupGooglePhotos(backupPhotosOptions) {
   if (service !== 'Photos') return
 
   const googlePhotos = new GoogleServicePhoto(path)
-  googlePhotos.backupGooglePhotos()
+  googlePhotos.backupGooglePhotos(null)
 }
